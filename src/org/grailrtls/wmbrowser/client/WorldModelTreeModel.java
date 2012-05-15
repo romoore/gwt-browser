@@ -6,14 +6,15 @@ import java.util.List;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.view.client.AsyncDataProvider;
+import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 
 public class WorldModelTreeModel implements TreeViewModel {
-
-  private final List<WorldState> states;
 
   /**
    * This selection model is shared across all leaf nodes. A selection model can
@@ -22,29 +23,13 @@ public class WorldModelTreeModel implements TreeViewModel {
    * are selected.
    */
   private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<String>();
+  // private final WSDataProvider dataProvider = new WSDataProvider();
 
-  public void addState(final WorldState state){
-    this.states.add(state);
-  }
-  
-  public void clearStates(){
-    this.states.clear();
-  }
-  
-  public boolean removeState(final WorldState state){
-    for(Iterator<WorldState> iter = this.states.iterator(); iter.hasNext();){
-      WorldState someState = iter.next();
-      if(someState.getUri().equals(state.getUri())){
-        iter.remove();
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  public WorldModelTreeModel() {
-    // Create a database of information.
-    states = new ArrayList<WorldState>();
+  private final AsyncDataProvider<WorldState> dataProvider;
+
+  public WorldModelTreeModel(final AsyncDataProvider<WorldState> dataProvider) {
+    this.dataProvider = dataProvider;
+
   }
 
   /**
@@ -53,13 +38,11 @@ public class WorldModelTreeModel implements TreeViewModel {
   public <T> NodeInfo<?> getNodeInfo(T value) {
     if (value == null) {
       // LEVEL 0.
-      // We passed null as the root value. Return the composers.
+      // We passed null as the root value. Return the URIs.
 
-      // Create a data provider that contains the list of composers.
-      ListDataProvider<WorldState> dataProvider = new ListDataProvider<WorldState>(
-          this.states);
+      // Create a data provider that contains the list of WorldState values.
 
-      // Create a cell to display a composer.
+      // Create a cell to display a World State.
       Cell<WorldState> cell = new AbstractCell<WorldState>() {
 
         @Override
@@ -69,18 +52,17 @@ public class WorldModelTreeModel implements TreeViewModel {
 
         }
       };
-
       // Return a node info that pairs the data provider and the cell.
-      return new DefaultNodeInfo<WorldState>(dataProvider, cell);
+      return new DefaultNodeInfo<WorldState>(this.dataProvider, cell);
     } else if (value instanceof WorldState) {
-      WorldState state = (WorldState)value;
+      WorldState state = (WorldState) value;
       // LEVEL 1.
-      // We want the children of the composer. Return the playlists.
+      // We want the children of the World State. Return the Attributes.
       List<Attribute> attribList = new ArrayList<Attribute>();
-      for(int i = 0; i < state.getAttributes().length(); ++i){
-        attribList.add(state.getAttributes().get(i));
+      for (int i = 0; i < state.getAttributes().length; ++i) {
+        attribList.add(state.getAttributes()[i]);
       }
-      ListDataProvider<Attribute> dataProvider = new ListDataProvider<Attribute>(
+      ListDataProvider<Attribute> wsDataProvider = new ListDataProvider<Attribute>(
           attribList);
       Cell<Attribute> cell = new AbstractCell<Attribute>() {
         @Override
@@ -90,18 +72,23 @@ public class WorldModelTreeModel implements TreeViewModel {
           }
         }
       };
-      return new DefaultNodeInfo<Attribute>(dataProvider, cell);
-    } 
-//    else if (value instanceof Attribute) {
-//      // LEVEL 2 - LEAF.
-//      // We want the children of the playlist. Return the songs.
-//      ListDataProvider<String> dataProvider = new ListDataProvider<String>(
-//          ((Attribute) value).getOrigin());
-//
-//      // Use the shared selection model.
-//      return new DefaultNodeInfo<String>(dataProvider, new TextCell(),
-//          selectionModel, null);
-//    }
+      return new DefaultNodeInfo<Attribute>(wsDataProvider, cell);
+    } else if (value instanceof Attribute) {
+      Attribute attrib = (Attribute) value;
+      // LEVEL 2 - LEAF.
+      // We want the children of the Attributet. Return each component.
+      List<String> attributeList = new ArrayList<String>();
+
+      attributeList.add("Value: " + attrib.getData());
+      attributeList.add("Origin: " + attrib.getOrigin());
+      attributeList.add("Created: " + attrib.getCreated());
+      attributeList.add("Expires: " + attrib.getExpires());
+      ListDataProvider<String> attrDataProvider = new ListDataProvider<String>(
+          attributeList);
+      // Use the shared selection model.
+      return new DefaultNodeInfo<String>(attrDataProvider, new TextCell(),
+          this.selectionModel, null);
+    }
 
     return null;
   }
