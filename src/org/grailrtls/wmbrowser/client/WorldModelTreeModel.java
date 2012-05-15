@@ -25,9 +25,9 @@ public class WorldModelTreeModel implements TreeViewModel {
   private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<String>();
   // private final WSDataProvider dataProvider = new WSDataProvider();
 
-  private final AsyncDataProvider<WorldState> dataProvider;
+  private final UriDataProvider dataProvider;
 
-  public WorldModelTreeModel(final AsyncDataProvider<WorldState> dataProvider) {
+  public WorldModelTreeModel(final UriDataProvider dataProvider) {
     this.dataProvider = dataProvider;
 
   }
@@ -58,12 +58,7 @@ public class WorldModelTreeModel implements TreeViewModel {
       WorldState state = (WorldState) value;
       // LEVEL 1.
       // We want the children of the World State. Return the Attributes.
-      List<Attribute> attribList = new ArrayList<Attribute>();
-      for (int i = 0; i < state.getAttributes().length; ++i) {
-        attribList.add(state.getAttributes()[i]);
-      }
-      ListDataProvider<Attribute> wsDataProvider = new ListDataProvider<Attribute>(
-          attribList);
+    
       Cell<Attribute> cell = new AbstractCell<Attribute>() {
         @Override
         public void render(Context context, Attribute value, SafeHtmlBuilder sb) {
@@ -72,7 +67,8 @@ public class WorldModelTreeModel implements TreeViewModel {
           }
         }
       };
-      return new DefaultNodeInfo<Attribute>(wsDataProvider, cell);
+      AttributeDataProvider dataProvider = new AttributeDataProvider(state.getUri());
+      return new DefaultNodeInfo<Attribute>(dataProvider, cell);
     } else if (value instanceof Attribute) {
       Attribute attrib = (Attribute) value;
       // LEVEL 2 - LEAF.

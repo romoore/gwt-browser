@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import com.gargoylesoftware.htmlunit.javascript.host.Attr;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -17,54 +18,51 @@ import com.sun.org.apache.regexp.internal.RE;
 import com.sun.xml.internal.ws.api.server.WSWebServiceContext;
 
 /**
- * Queries for a list of URI values from the World Model.
- * @author Robert Moore.
- *
+ * Provides a single WorldState (primarily its attributes) by requesting a
+ * snapshot from the world model server.
+ * 
+ * @author Robert Moore
+ * 
  */
-public class UriDataProvider extends AsyncDataProvider<WorldState>  {
+public class AttributeDataProvider extends AsyncDataProvider<Attribute> {
 
-  private static final Logger log = Logger.getLogger(UriDataProvider.class.getName());
-  
-  private String query = null;
-  private final String searchPath ="http://" + WMBrowser.QUERY_HOST+":" + WMBrowser.QUERY_PORT + WMBrowser.QUERY_PATH + WMBrowser.SEARCH_PATH;
+  private static final Logger log = Logger
+      .getLogger(AttributeDataProvider.class.getName());
 
-  private ArrayList<WorldState> matchingStates = new ArrayList<WorldState>();
+  private final String searchPath = "http://" + WMBrowser.QUERY_HOST+":" + WMBrowser.QUERY_PORT + WMBrowser.QUERY_PATH + WMBrowser.SNAPSHOT_PATH;
+
+  private String uri = null;
+
+  private List<Attribute> theAttributes = new ArrayList<Attribute>();
 
   private int jsonRequestId = 0;
   
-  private WorldStateComparator comparator = new WorldStateComparator();
+  private AttributeNameComparator comparator = new AttributeNameComparator();
 
-  public UriDataProvider() {
+  public AttributeDataProvider(final String uri) {
     super();
-  }
 
-  public void setQuery(final String query) {
-    this.query = query;
-    
-    this.matchingStates.clear();
-
-    this.retrieveSearchResults(this.query);
-   
-    
+    this.uri = uri;
+    this.retrieveSnapshot(uri);
   }
 
   @Override
-  protected void onRangeChanged(HasData<WorldState> display) {
+  protected void onRangeChanged(HasData<Attribute> display) {
     final Range range = display.getVisibleRange();
     int rStart = range.getStart();
     int rLength = range.getLength();
     int rEnd = rStart + rLength;
-    List<WorldState> visibleStates = new LinkedList<WorldState>();
-    if(rStart < this.matchingStates.size()){
-      for(int i = rStart; i < rEnd && i < this.matchingStates.size(); ++i){
-        visibleStates.add(this.matchingStates.get(i));
+    List<Attribute> visibleAttributes = new LinkedList<Attribute>();
+    if (rStart < this.theAttributes.size()) {
+      for (int i = rStart; i < rEnd && i < this.theAttributes.size(); ++i) {
+        visibleAttributes.add(this.theAttributes.get(i));
       }
     }
-    this.updateRowData(rStart, visibleStates);
+    this.updateRowData(rStart, visibleAttributes);
   }
 
   protected native static void getSearchJson(final int requestId,
-      final String url, UriDataProvider handler)/*-{
+      final String url, AttributeDataProvider handler)/*-{
 		var callback = "callback" + requestId;
 
 		var script = document.createElement("script");
@@ -73,20 +71,20 @@ public class UriDataProvider extends AsyncDataProvider<WorldState>  {
 		script.setAttribute("type", "text/javascript");
 
 		window[callback] = function(jsonObj) {
-			handler.@org.grailrtls.wmbrowser.client.UriDataProvider::handleSearchResponse(Lcom/google/gwt/core/client/JavaScriptObject;)(jsonObj);
+			handler.@org.grailrtls.wmbrowser.client.AttributeDataProvider::handleSearchResponse(Lcom/google/gwt/core/client/JavaScriptObject;)(jsonObj);
 			window[callback + "done"] = true;
 		}
 
 		setTimeout(
 				function() {
 					if (!window[callback + "done"]) {
-						handler.@org.grailrtls.wmbrowser.client.UriDataProvider::handleSearchResponse(Lcom/google/gwt/core/client/JavaScriptObject;)(null);
+						handler.@org.grailrtls.wmbrowser.client.AttributeDataProvider::handleSearchResponse(Lcom/google/gwt/core/client/JavaScriptObject;)(null);
 					}
 
 					document.body.removeChild(script);
 					delete window[callback];
 					delete window[callback + "done"];
-				}, 2000);
+				}, 1000);
 
 		document.body.appendChild(script);
 
@@ -101,15 +99,13 @@ public class UriDataProvider extends AsyncDataProvider<WorldState>  {
       return;
     }
 
-    this.updateWorldState(asArrayOfString(jso));
-
   }
 
   public void handleWSResponse(JavaScriptObject jso) {
     if (jso == null) {
       return;
     }
-    
+    this.updateWorldState(asArrayOfWorldState(jso));
   }
 
   private final native JsArray<JsWorldState> asArrayOfWorldState(
@@ -121,15 +117,14 @@ public class UriDataProvider extends AsyncDataProvider<WorldState>  {
 		return jso;
   }-*/;
 
-  final void retrieveSearchResults(final String uri) {
-    final String url = URL.encode(this.searchPath + uri)
-        + "&callback=";
+  final void retrieveSnapshot(final String uri) {
+    final String url = URL.encode(this.searchPath + uri) + "&callback=";
 
-    getSearchJson(this.jsonRequestId++, url, this);
+    getWSJson(this.jsonRequestId++, url, this);
   }
 
   protected native static void getWSJson(final int requestId, final String url,
-      UriDataProvider handler)/*-{
+      AttributeDataProvider handler)/*-{
 		var callback = "callback" + requestId;
 
 		var script = document.createElement("script");
@@ -156,24 +151,28 @@ public class UriDataProvider extends AsyncDataProvider<WorldState>  {
 		document.body.appendChild(script);
 
   }-*/;
-  
-  protected void updateWorldState(JsArrayString uris){
-    this.matchingStates.clear();
-    for(int i = 0; i < uris.length(); ++i){
-      String iUri = uris.get(i);
-      WorldState newState = new WorldState();
-      newState.setUri(iUri);
-      
-      this.matchingStates.add(newState);
+
+  protected void updateWorldState(JsArray<JsWorldState> states) {
+    this.theAttributes.clear();
+    if (states == null || states.length() == 0) {
+      return;
+    }
+    JsWorldState iState = states.get(0);
+    for (int j = 0; j < iState.getAttributes().length(); ++j) {
+      JsAttribute jAttr = iState.getAttributes().get(j);
+      Attribute newAttr = new Attribute();
+      newAttr.setCreated(jAttr.getCreated());
+      newAttr.setExpires(jAttr.getExpires());
+      newAttr.setData(jAttr.getData());
+      newAttr.setName(jAttr.getName());
+      newAttr.setOrigin(jAttr.getOrigin());
+      this.theAttributes.add(newAttr);
     }
     
-    Collections.sort(this.matchingStates,this.comparator);
-    
-//    for(HasData<WorldState> disp : this.getDataDisplays()){
-//      this.onRangeChanged(disp);
-//    }
-    this.updateRowCount(this.matchingStates.size(), true);
-    this.updateRowData(0, this.matchingStates);
+    Collections.sort(this.theAttributes, this.comparator);
+
+    this.updateRowCount(this.theAttributes.size(), true);
+    this.updateRowData(0, this.theAttributes);
   }
 
 }

@@ -1,42 +1,32 @@
 package org.grailrtls.wmbrowser.client;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.user.cellview.client.CellBrowser;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class WMBrowser implements EntryPoint {
 
-  protected String QUERY_HOST = "localhost";
-  protected String QUERY_PORT = "7011";
-  protected String QUERY_PATH = "/grailrest";
-  protected static final String SNAPSHOT_PATH = "/snapshot?uri=";
-  protected static final String SEARCH_PATH = "/search?uri=";
+  public static String QUERY_HOST = "localhost";
+  public static String QUERY_PORT = "7011";
+  public static String QUERY_PATH = "/grailrest";
+  public static final String SNAPSHOT_PATH = "/snapshot?uri=";
+  public static final String SEARCH_PATH = "/search?uri=";
 
   private Label errorMsgLabel = new Label();
 
@@ -52,7 +42,7 @@ public class WMBrowser implements EntryPoint {
   private String currentSearch = "";
   private ArrayList<String> matchingUris = new ArrayList<String>();
 
-  private WSDataProvider dataProvider = new WSDataProvider("http://" + QUERY_HOST+":" + QUERY_PORT + QUERY_PATH + SNAPSHOT_PATH);
+  private UriDataProvider dataProvider = new UriDataProvider();
   private WorldModelTreeModel browserModel = new WorldModelTreeModel(this.dataProvider);
   private CellBrowser wmBrowser = new CellBrowser(this.browserModel, null);
 
@@ -67,7 +57,7 @@ public class WMBrowser implements EntryPoint {
     mainPanel.addSouth(this.errorMsgLabel,5);
     mainPanel.addNorth(this.addUriPanel,5);
     this.mainPanel.add(this.wmBrowser);
-    this.mainPanel.setSize("60em", "100pct");
+    this.mainPanel.setSize("60em", "40em");
 
     RootPanel.get("wmBrowserPanel").add(this.mainPanel);
 
