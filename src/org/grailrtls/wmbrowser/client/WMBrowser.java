@@ -83,7 +83,7 @@ public class WMBrowser implements EntryPoint {
   final void searchUri() {
     String newUri = WMBrowser.this.uriBox.getText().trim();
     this.currentSearch = newUri;
-    this.uriBox.setText("");
+    
     this.uriBox.setFocus(true);
 
     this.dataProvider.setQuery(newUri);
