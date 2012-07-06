@@ -8,6 +8,6 @@ public class SearchResponse extends JavaScriptObject{
     
   }
   
-  public final native String[] getUris() /*-{ return this.uris; }-*/;
+  public final native String[] getIds() /*-{ return this.ids; }-*/;
 
 }

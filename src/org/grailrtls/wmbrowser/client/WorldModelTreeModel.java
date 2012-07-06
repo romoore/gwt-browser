@@ -25,9 +25,9 @@ public class WorldModelTreeModel implements TreeViewModel {
   private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<String>();
   // private final WSDataProvider dataProvider = new WSDataProvider();
 
-  private final UriDataProvider dataProvider;
+  private final IdDataProvider dataProvider;
 
-  public WorldModelTreeModel(final UriDataProvider dataProvider) {
+  public WorldModelTreeModel(final IdDataProvider dataProvider) {
     this.dataProvider = dataProvider;
 
   }

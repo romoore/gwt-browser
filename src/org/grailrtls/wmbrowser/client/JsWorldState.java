@@ -9,9 +9,9 @@ public class JsWorldState extends JavaScriptObject{
     
   }
   
-  public final native void setUri(final String uri) /*-{ this.uri = uri;}-*/;
+  public final native void setIdentifier(final String identifier) /*-{ this.identifier = identifier;}-*/;
   
-  public final native String getUri() /*-{ return this.uri; }-*/;
+  public final native String getIdentifier() /*-{ return this.identifier; }-*/;
   
   public final native JsArray<JsAttribute> getAttributes() /*-{ return this.attributes; }-*/;
   

@@ -10,6 +10,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.cellview.client.CellBrowser;
+import com.google.gwt.user.cellview.client.CellBrowser.Builder;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -25,68 +26,70 @@ public class WMBrowser implements EntryPoint {
   public static String QUERY_HOST = "localhost";
   public static String QUERY_PORT = "7011";
   public static String QUERY_PATH = "/grailrest";
-  public static final String SNAPSHOT_PATH = "/snapshot?uri=";
-  public static final String SEARCH_PATH = "/search?uri=";
+  public static final String SNAPSHOT_PATH = "/snapshot?q=";
+  public static final String SEARCH_PATH = "/search?q=";
 
   private Label errorMsgLabel = new Label();
 
-  private Label searchLabel = new Label("Enter a URI regex to search:");
-  private TextBox uriBox = new TextBox();
-  private Button searchUriButton = new Button("Search");
+  private Label searchLabel = new Label("Enter an ID regex to search:");
+  private TextBox idBox = new TextBox();
+  private Button searchIdButton = new Button("Search");
 
   private Label currentSearchLabel = new Label();
 
-  private HorizontalPanel addUriPanel = new HorizontalPanel();
+  private HorizontalPanel addIdPanel = new HorizontalPanel();
   private DockLayoutPanel mainPanel = new DockLayoutPanel(Unit.EM);
 
   private String currentSearch = "";
   private ArrayList<String> matchingUris = new ArrayList<String>();
 
-  private UriDataProvider dataProvider = new UriDataProvider();
+  private IdDataProvider dataProvider = new IdDataProvider();
   private WorldModelTreeModel browserModel = new WorldModelTreeModel(this.dataProvider);
-  private CellBrowser wmBrowser = new CellBrowser(this.browserModel, null);
+  private Builder<Object> cb = new CellBrowser.Builder<Object>(this.browserModel, null);
+ 
+  private CellBrowser wmBrowser = this.cb.build();
 
   public void onModuleLoad() {
     
 //    this.wmBrowser.setSize("20em", "10em");
 
-    this.addUriPanel.add(this.searchLabel);
-    this.addUriPanel.add(this.uriBox);
-    this.addUriPanel.add(this.searchUriButton);
+    this.addIdPanel.add(this.searchLabel);
+    this.addIdPanel.add(this.idBox);
+    this.addIdPanel.add(this.searchIdButton);
 
-    mainPanel.addSouth(this.errorMsgLabel,5);
-    mainPanel.addNorth(this.addUriPanel,5);
+    this.mainPanel.addSouth(this.errorMsgLabel,5);
+    this.mainPanel.addNorth(this.addIdPanel,5);
     this.mainPanel.add(this.wmBrowser);
     this.mainPanel.setSize("60em", "40em");
 
     RootPanel.get("wmBrowserPanel").add(this.mainPanel);
 
-    uriBox.addKeyPressHandler(new KeyPressHandler() {
+    this.idBox.addKeyPressHandler(new KeyPressHandler() {
 
       @Override
       public void onKeyPress(KeyPressEvent event) {
         if (event.getCharCode() == KeyCodes.KEY_ENTER) {
-          searchUri();
+          searchId();
         }
       }
     });
 
-    this.searchUriButton.addClickHandler(new ClickHandler() {
+    this.searchIdButton.addClickHandler(new ClickHandler() {
 
       @Override
       public void onClick(ClickEvent event) {
-        searchUri();
+        searchId();
       }
     });
   }
 
-  final void searchUri() {
-    String newUri = WMBrowser.this.uriBox.getText().trim();
-    this.currentSearch = newUri;
-    this.uriBox.setSelectionRange(0, this.uriBox.getText().length());
-    this.uriBox.setFocus(true);
+  final void searchId() {
+    String newId = WMBrowser.this.idBox.getText().trim();
+    this.currentSearch = newId;
+    this.idBox.setSelectionRange(0, this.idBox.getText().length());
+    this.idBox.setFocus(true);
 
-    this.dataProvider.setQuery(newUri);
+    this.dataProvider.setQuery(newId);
 
   }
 

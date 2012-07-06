@@ -31,7 +31,7 @@ public class AttributeDataProvider extends AsyncDataProvider<Attribute> {
 
   private final String searchPath = "http://" + WMBrowser.QUERY_HOST+":" + WMBrowser.QUERY_PORT + WMBrowser.QUERY_PATH + WMBrowser.SNAPSHOT_PATH;
 
-  private String uri = null;
+  private String identifier = null;
 
   private List<Attribute> theAttributes = new ArrayList<Attribute>();
 
@@ -39,11 +39,11 @@ public class AttributeDataProvider extends AsyncDataProvider<Attribute> {
   
   private AttributeNameComparator comparator = new AttributeNameComparator();
 
-  public AttributeDataProvider(final String uri) {
+  public AttributeDataProvider(final String identifier) {
     super();
 
-    this.uri = uri;
-    this.retrieveSnapshot(uri);
+    this.identifier = identifier;
+    this.retrieveSnapshot(identifier);
   }
 
   @Override
@@ -117,8 +117,8 @@ public class AttributeDataProvider extends AsyncDataProvider<Attribute> {
 		return jso;
   }-*/;
 
-  final void retrieveSnapshot(final String uri) {
-    final String url = URL.encode(this.searchPath + uri) + "&callback=";
+  final void retrieveSnapshot(final String identifier) {
+    final String url = URL.encode(this.searchPath + identifier) + "&cb=";
 
     getWSJson(this.jsonRequestId++, url, this);
   }
