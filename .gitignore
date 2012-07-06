@@ -3,3 +3,7 @@
 *deploy
 gwt-unitCache
 gwt
+# Eclipse files
+.settings
+.project
+.classpath
